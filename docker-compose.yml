@@ -1,27 +1,41 @@
 version: "3.9"
 
 services:
-
   backend:
-    image: cloud-native:v1
-    
-    ports:
-      - "5000:5000"
+    build: ./backend
+    expose: # Changed from ports
+      - "5000"
+    restart: always
 
   frontend:
-    image: cloud-frontend:v1
-    
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-
+    build: ./frontend
+    expose: # Changed from ports
+      - "3000"
+    restart: always
 
   nginx:
     build: ./nginx
-    container_name: nginx-gateway
     ports:
-      - "80:80"
+      - "80:80" # This is the ONLY port public users see
     depends_on:
       - frontend
       - backend
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus # Added for persistence
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana # Added for persistence
+
+volumes:
+  prometheus_data: # Define the volume here
+  grafana_data:    # Define the volume here

@@ -1,5 +1,5 @@
-from fastapi import APIRouter
-from prometheus_client import Counter, generate_latest
+from fastapi import APIRouter, Response
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 
 router = APIRouter()
 
@@ -11,5 +11,7 @@ REQUEST_COUNT = Counter(
 @router.get("/metrics")
 def metrics():
     REQUEST_COUNT.inc()
-    return generate_latest()
-
+    return Response(
+        generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )

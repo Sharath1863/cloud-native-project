@@ -6,9 +6,14 @@ function App() {
   const [statusColor, setStatusColor] = useState("gray");
 
   useEffect(() => {
-    fetch("http://localhost:5000/health")
-      .then(res => res.json())
-      .then(data => {
+    // FIX: Removed "http://localhost:5000" and used "/api/health"
+    // This tells the browser: "Go to the same server I am on, but look for the /api route"
+    fetch("/api/health")
+      .then((res) => {
+        if (!res.ok) throw new Error("API not reachable");
+        return res.json();
+      })
+      .then((data) => {
         if (data.status === "healthy") {
           setHealth("HEALTHY");
           setStatusColor("green");
@@ -17,7 +22,8 @@ function App() {
           setStatusColor("red");
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Fetch error:", err);
         setHealth("DOWN");
         setStatusColor("red");
       });
@@ -37,16 +43,16 @@ function App() {
           </span>
         </div>
 
-        <div className="status-row">
-          <span>Version</span>
-          <span className="badge blue">v1.0.0</span>
-        </div>
-
-        <div className="status-row">
+        <div className={`status-row ${health !== "HEALTHY" ? "error-text" : ""}`}>
           <span>API Connectivity</span>
           <span className={`badge ${statusColor}`}>
             {health === "HEALTHY" ? "OK" : "FAILED"}
           </span>
+        </div>
+
+        <div className="status-row">
+          <span>Version</span>
+          <span className="badge blue">v1.0.0</span>
         </div>
       </div>
     </div>
