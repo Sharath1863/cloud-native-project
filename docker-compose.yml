@@ -8,7 +8,8 @@ services:
     expose:
       - "5000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      # FIX: Uses Python instead of curl to avoid the "executable not found" error
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -47,8 +48,24 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
 
+  # FIX: Moved node-exporter INSIDE the services block so Prometheus can scrape it
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+    expose:
+      - "9100"
+
 volumes:
   grafana_data:
-    name: production_grafana_data  # This forces a specific name
+    name: production_grafana_data 
   prometheus_data:
-    name: production_prometheus_data # This forces a specific name
+    name: production_prometheus_data
