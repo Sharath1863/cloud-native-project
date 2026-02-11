@@ -7,23 +7,18 @@
   --text: #c9d1d9;
 }
 
-body { background: var(--bg); color: var(--text); margin: 0; font-family: 'Inter', sans-serif; }
-
+body { background: var(--bg); color: var(--text); margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: var(--panel); border-bottom: 1px solid #30363d; }
 .logo { font-size: 1.5rem; font-weight: bold; }
 .logo span { color: var(--accent); }
-
 .status-pill { padding: 6px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid #30363d; }
 .status-pill.alive { color: var(--success); border-color: var(--success); background: rgba(63, 185, 80, 0.1); }
-.status-pill.offline { color: var(--danger); border-color: var(--danger); }
-
+.status-pill.offline { color: var(--danger); border-color: var(--danger); background: rgba(248, 81, 73, 0.1); }
 .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; padding: 40px; }
 .panel { background: var(--panel); padding: 25px; border-radius: 12px; border: 1px solid #30363d; }
-
 .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-input { flex: 1; padding: 10px; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px; }
+input { flex: 1; padding: 12px; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px; }
 button { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-
-.task-item { padding: 12px; border-bottom: 1px solid #30363d; }
+.task-item { padding: 12px; border-bottom: 1px solid #30363d; font-size: 1rem; }
 .stack-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
 .grafana-link { display: block; text-align: center; background: #f38020; color: white; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 20px; }

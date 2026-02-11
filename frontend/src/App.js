@@ -8,7 +8,8 @@ function App() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch('/api/tasks'); // Routed via Nginx
+      const res = await fetch('/api/tasks'); 
+      if (!res.ok) throw new Error();
       const data = await res.json();
       setTasks(data);
       setStatus("ALIVE");
@@ -19,13 +20,15 @@ function App() {
 
   const addTask = async () => {
     if (!input) return;
-    await fetch('/api/tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: input })
-    });
-    setInput('');
-    fetchTasks(); // This triggers the "waves" in Grafana!
+    try {
+      await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: input })
+      });
+      setInput('');
+      fetchTasks(); 
+    } catch (e) { console.error("Failed to add task"); }
   };
 
   useEffect(() => { fetchTasks(); }, []);
@@ -51,9 +54,9 @@ function App() {
             <button onClick={addTask}>Add Task</button>
           </div>
           <div className="task-list">
-            {tasks.map(t => (
+            {tasks.length > 0 ? tasks.map(t => (
               <div key={t.id} className="task-item">{t.title}</div>
-            ))}
+            )) : <p>No active tasks in production.</p>}
           </div>
         </section>
 
@@ -65,7 +68,7 @@ function App() {
             <div className="stack-item"><span>Metrics</span> <strong>Prometheus</strong></div>
           </div>
           <hr />
-          <a href="http://44.221.51.56:3001" className="grafana-link" target="_blank" rel="noreferrer">
+          <a href={`http://${window.location.hostname}:3001`} className="grafana-link" target="_blank" rel="noreferrer">
             View Live Grafana Metrics
           </a>
         </section>
