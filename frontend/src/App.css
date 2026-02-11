@@ -1,62 +1,29 @@
-body {
-  margin: 0;
-  font-family: "Courier New", monospace;
-  background-color: #0f172a;
-  color: #e5e7eb;
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --accent: #58a6ff;
+  --success: #3fb950;
+  --danger: #f85149;
+  --text: #c9d1d9;
 }
 
-.dashboard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 80px;
-}
+body { background: var(--bg); color: var(--text); margin: 0; font-family: 'Inter', sans-serif; }
 
-.title {
-  font-size: 2.5rem;
-  margin-bottom: 40px;
-  color: #22c55e;
-  letter-spacing: 2px;
-}
+.navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: var(--panel); border-bottom: 1px solid #30363d; }
+.logo { font-size: 1.5rem; font-weight: bold; }
+.logo span { color: var(--accent); }
 
-.card {
-  background-color: #111827;
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-  width: 350px;
-}
+.status-pill { padding: 6px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; border: 1px solid #30363d; }
+.status-pill.alive { color: var(--success); border-color: var(--success); background: rgba(63, 185, 80, 0.1); }
+.status-pill.offline { color: var(--danger); border-color: var(--danger); }
 
-.card h2 {
-  margin-bottom: 20px;
-  border-bottom: 1px solid #374151;
-  padding-bottom: 10px;
-}
+.main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; padding: 40px; }
+.panel { background: var(--panel); padding: 25px; border-radius: 12px; border: 1px solid #30363d; }
 
-.status-row {
-  display: flex;
-  justify-content: space-between;
-  margin: 15px 0;
-  font-size: 1.1rem;
-}
+.input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+input { flex: 1; padding: 10px; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 6px; }
+button { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-.badge {
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-weight: bold;
-}
-
-.green {
-  background-color: #16a34a;
-  color: white;
-}
-
-.red {
-  background-color: #dc2626;
-  color: white;
-}
-
-.blue {
-  background-color: #2563eb;
-  color: white;
-}
+.task-item { padding: 12px; border-bottom: 1px solid #30363d; }
+.stack-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; }
+.grafana-link { display: block; text-align: center; background: #f38020; color: white; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 20px; }

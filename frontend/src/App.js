@@ -1,59 +1,74 @@
-import React, { useEffect, useState } from "react";
-import "./App.css";
+import React, { useState, useEffect } from 'react';
+import './App.css';
 
 function App() {
-  const [health, setHealth] = useState("Checking...");
-  const [statusColor, setStatusColor] = useState("gray");
+  const [tasks, setTasks] = useState([]);
+  const [input, setInput] = useState('');
+  const [status, setStatus] = useState("Checking...");
 
-  useEffect(() => {
-    // FIX: Removed "http://localhost:5000" and used "/api/health"
-    // This tells the browser: "Go to the same server I am on, but look for the /api route"
-    fetch("/api/health")
-      .then((res) => {
-        if (!res.ok) throw new Error("API not reachable");
-        return res.json();
-      })
-      .then((data) => {
-        if (data.status === "healthy") {
-          setHealth("HEALTHY");
-          setStatusColor("green");
-        } else {
-          setHealth("UNHEALTHY");
-          setStatusColor("red");
-        }
-      })
-      .catch((err) => {
-        console.error("Fetch error:", err);
-        setHealth("DOWN");
-        setStatusColor("red");
-      });
-  }, []);
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch('/api/tasks'); // Routed via Nginx
+      const data = await res.json();
+      setTasks(data);
+      setStatus("ALIVE");
+    } catch (err) {
+      setStatus("OFFLINE");
+    }
+  };
+
+  const addTask = async () => {
+    if (!input) return;
+    await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: input })
+    });
+    setInput('');
+    fetchTasks(); // This triggers the "waves" in Grafana!
+  };
+
+  useEffect(() => { fetchTasks(); }, []);
 
   return (
     <div className="dashboard">
-      <h1 className="title">Cloud Native Platform</h1>
-
-      <div className="card">
-        <h2>System Status</h2>
-
-        <div className="status-row">
-          <span>Backend Service</span>
-          <span className={`badge ${statusColor}`}>
-            {health}
-          </span>
+      <nav className="navbar">
+        <div className="logo">CloudNative<span>Ops</span></div>
+        <div className={`status-pill ${status.toLowerCase()}`}>
+          ● System: {status}
         </div>
+      </nav>
 
-        <div className={`status-row ${health !== "HEALTHY" ? "error-text" : ""}`}>
-          <span>API Connectivity</span>
-          <span className={`badge ${statusColor}`}>
-            {health === "HEALTHY" ? "OK" : "FAILED"}
-          </span>
-        </div>
+      <div className="main-grid">
+        <section className="panel task-panel">
+          <h2>Task Control Center</h2>
+          <div className="input-group">
+            <input 
+              value={input} 
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Deploy new production goal..." 
+            />
+            <button onClick={addTask}>Add Task</button>
+          </div>
+          <div className="task-list">
+            {tasks.map(t => (
+              <div key={t.id} className="task-item">{t.title}</div>
+            ))}
+          </div>
+        </section>
 
-        <div className="status-row">
-          <span>Version</span>
-          <span className="badge blue">v1.0.0</span>
-        </div>
+        <section className="panel stats-panel">
+          <h3>Infrastructure Stack</h3>
+          <div className="stack-list">
+            <div className="stack-item"><span>Runtime</span> <strong>Docker</strong></div>
+            <div className="stack-item"><span>CI/CD</span> <strong>Jenkins</strong></div>
+            <div className="stack-item"><span>Metrics</span> <strong>Prometheus</strong></div>
+          </div>
+          <hr />
+          <a href="http://44.221.51.56:3001" className="grafana-link" target="_blank" rel="noreferrer">
+            View Live Grafana Metrics
+          </a>
+        </section>
       </div>
     </div>
   );
