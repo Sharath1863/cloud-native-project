@@ -2,52 +2,69 @@ pipeline {
     agent any
 
     environment {
-        // This ensures the build runs with the correct user permissions
-        DOCKER_COMPOSE = 'docker compose'
+        // CHANGE THIS to your actual Docker Hub username
+        DOCKER_HUB_USER = 'sharath2003' 
+        // Injects the Jenkins Build Number (e.g., 1, 2, 3) as the version
+        VERSION = "${BUILD_NUMBER}"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Cleanup Workspace') {
             steps {
-                // Jenkins automatically clones your repo here
-                echo 'Checking out code from GitHub...'
+                cleanWs()
+            }
+        }
+
+        stage('Checkout SCM') {
+            steps {
                 checkout scm
             }
         }
 
-        stage('Cleanup') {
+        stage('Build & Tag Images') {
             steps {
-                echo 'Cleaning up old containers to save space...'
-                // This stops and removes old containers before building new ones
-                sh "${DOCKER_COMPOSE} down --remove-orphans"
+                echo "Building version ${VERSION}..."
+                sh "docker build -t ${DOCKER_HUB_USER}/cloud-native-frontend:${VERSION} ./frontend"
+                sh "docker build -t ${DOCKER_HUB_USER}/cloud-native-backend:${VERSION} ./backend"
+                sh "docker build -t ${DOCKER_HUB_USER}/cloud-native-nginx:${VERSION} ./nginx"
             }
         }
 
-        stage('Build & Deploy') {
+        stage('Push to Docker Hub') {
             steps {
-                echo 'Building and starting containers...'
-                // The -d flag runs it in the background
-                // The --build flag ensures your App.js changes are included
-                sh "${DOCKER_COMPOSE} up -d --build"
+                // 'dockerhub-creds' must exist in Jenkins Credentials
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                    sh "echo \$PASS | docker login -u \$USER --password-stdin"
+                    sh "docker push ${DOCKER_HUB_USER}/cloud-native-frontend:${VERSION}"
+                    sh "docker push ${DOCKER_HUB_USER}/cloud-native-backend:${VERSION}"
+                    sh "docker push ${DOCKER_HUB_USER}/cloud-native-nginx:${VERSION}"
+                }
             }
         }
 
-        stage('Verify') {
+        stage('Deploy to Production') {
             steps {
-                echo 'Verifying deployment...'
-                // Gives the containers 10 seconds to start up
-                sleep 10
-                sh 'docker ps'
+                echo "Deploying Version ${VERSION} to EC2..."
+                // Exporting variables so docker-compose can read them
+                sh "export DOCKER_HUB_USER=${DOCKER_HUB_USER} && export VERSION=${VERSION} && docker compose up -d"
+            }
+        }
+
+        stage('Verify Health') {
+            steps {
+                echo "Waiting for services to stabilize..."
+                sleep 15
+                sh "docker ps"
             }
         }
     }
 
     post {
         success {
-            echo 'Deployment Successful! Visit http://44.221.51.56'
+            echo "Successfully deployed version ${VERSION}!"
         }
         failure {
-            echo 'Deployment Failed. Check the logs above.'
+            echo "Build or Deployment failed. Rolling back or checking logs is required."
         }
     }
 }
