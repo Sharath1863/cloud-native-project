@@ -32,16 +32,23 @@ services:
       - frontend
       - backend
 
-  # Optional: Monitoring services
   prometheus:
     image: prom/prometheus:latest
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
 
   grafana:
     image: grafana/grafana:latest
     ports:
       - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
 
+volumes:
+  grafana_data:
+    name: production_grafana_data  # This forces a specific name
+  prometheus_data:
+    name: production_prometheus_data # This forces a specific name
