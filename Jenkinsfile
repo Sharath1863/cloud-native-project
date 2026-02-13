@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        // CHANGE THIS to your actual Docker Hub username
-        DOCKER_HUB_USER = 'sharath2003' 
-        // Injects the Jenkins Build Number (e.g., 1, 2, 3) as the version
+        DOCKER_HUB_USER = 'sharath2003'
         VERSION = "${BUILD_NUMBER}"
+        K8S_NAMESPACE = "cloud-native"
     }
 
     stages {
+
         stage('Cleanup Workspace') {
             steps {
                 cleanWs()
@@ -32,9 +32,14 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                // 'dockerhub-creds' must exist in Jenkins Credentials
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    passwordVariable: 'PASS',
+                    usernameVariable: 'USER'
+                )]) {
+
                     sh "echo \$PASS | docker login -u \$USER --password-stdin"
+
                     sh "docker push ${DOCKER_HUB_USER}/cloud-native-frontend:${VERSION}"
                     sh "docker push ${DOCKER_HUB_USER}/cloud-native-backend:${VERSION}"
                     sh "docker push ${DOCKER_HUB_USER}/cloud-native-nginx:${VERSION}"
@@ -42,29 +47,42 @@ pipeline {
             }
         }
 
-        stage('Deploy to Production') {
+        stage('Update Kubernetes Manifests') {
             steps {
-                echo "Deploying Version ${VERSION} to EC2..."
-                // Exporting variables so docker-compose can read them
-                sh "export DOCKER_HUB_USER=${DOCKER_HUB_USER} && export VERSION=${VERSION} && docker compose up -d"
+                echo "Updating image tags in K8s manifests..."
+
+                sh """
+                sed -i 's|cloud-native-frontend:.*|cloud-native-frontend:${VERSION}|g' k8s/frontend-deployment.yaml
+                sed -i 's|cloud-native-backend:.*|cloud-native-backend:${VERSION}|g' k8s/backend-deployment.yaml
+                sed -i 's|cloud-native-nginx:.*|cloud-native-nginx:${VERSION}|g' k8s/nginx-deployment.yaml
+                """
             }
         }
 
-        stage('Verify Health') {
+        stage('Deploy to EKS') {
             steps {
-                echo "Waiting for services to stabilize..."
-                sleep 15
-                sh "docker ps"
+                echo "Deploying to Kubernetes cluster..."
+
+                sh "kubectl apply -f k8s/"
+
+                sh "kubectl rollout status deployment/frontend -n ${K8S_NAMESPACE}"
+                sh "kubectl rollout status deployment/backend -n ${K8S_NAMESPACE}"
+            }
+        }
+
+        stage('Verify Pods') {
+            steps {
+                sh "kubectl get pods -n ${K8S_NAMESPACE}"
             }
         }
     }
 
     post {
         success {
-            echo "Successfully deployed version ${VERSION}!"
+            echo "Successfully deployed version ${VERSION} to EKS 🚀"
         }
         failure {
-            echo "Build or Deployment failed. Rolling back or checking logs is required."
+            echo "Deployment failed. Check logs."
         }
     }
 }
