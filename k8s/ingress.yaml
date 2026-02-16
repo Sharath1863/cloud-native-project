@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: cloud-native-ingress
   namespace: cloud-native
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
@@ -15,7 +17,6 @@ spec:
             name: frontend-service
             port:
               number: 80
-
       - path: /api
         pathType: Prefix
         backend:
